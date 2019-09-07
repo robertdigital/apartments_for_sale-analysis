@@ -1,6 +1,7 @@
 import os
 from bs4 import BeautifulSoup
 import csv
+import json
 import uuid
 import requests
 
@@ -51,8 +52,6 @@ def extract_offers(text):
                               price=price)
     fix(offer)
     offers.append(offer)
-    print(offers[0].meters)
-
     return offers
 
 
@@ -68,8 +67,10 @@ def main():
     output_dir = os.path.join("data", dir_id)
     os.makedirs(output_dir, exist_ok=True)
 
+    page_id = 0
+
     while next_url:
-        page_id = 1
+        page_id += 1
         response = session.get(next_url)
 
         if response.ok:
@@ -77,13 +78,13 @@ def main():
             source = response.text
             offers = extract_offers(source)
 
-            output_filename = os.path.join(output_dir, "plik-%d.csv" % page_id)
-            with open(output_filename, 'w', encoding='utf-8') as csvfile:
-                csvwriter = csv.DictWriter(csvfile,
-                                           fieldnames=["meters", "price"],
-                                           delimiter=',')
-                csvwriter.writeheader()
-                csvwriter.writerows([o.__dict__ for o in offers])
+            output_filename = os.path.join(output_dir,
+                                           "plik-%d.json" % page_id)
+
+            with open(output_filename, 'w', encoding='utf-8') as json_file:
+                json.dump([o.__dict__ for o in offers], json_file)
+                print("WROTE:", output_filename)
+
         else:
             print("ERROR")
 
@@ -91,6 +92,13 @@ def main():
         print(next_url)
 
     # create_result_file()
+
+        #
+        # csvwriter = csv.DictWriter(csvfile,
+        #                            fieldnames=["meters", "price"],
+        #                            delimiter=',')
+        # csvwriter.writeheader()
+        # csvwriter.writerows([o.__dict__ for o in offers])
 
 if __name__ == "__main__":
     main()
