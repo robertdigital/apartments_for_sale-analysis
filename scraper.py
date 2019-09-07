@@ -1,3 +1,4 @@
+import os
 from bs4 import BeautifulSoup
 import csv
 import requests
@@ -45,9 +46,14 @@ def extract(text):
     offers.append(offer)
     print(offers[0].meters)
 
-    # with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
-    #     csvwriter = csv.DickWriter(csvfile, fieldnames=["meters", "price"])
-    #     csvwriter.writerow(offers)
+    os.makedirs("data", exist_ok=True)
+
+    with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
+        csvwriter = csv.DictWriter(csvfile,
+                                   fieldnames=["meters", "price"],
+                                   delimiter=',')
+        csvwriter.writeheader()
+        csvwriter.writerows([o.__dict__ for o in offers])
 
     return offers
 
