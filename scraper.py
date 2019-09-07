@@ -15,6 +15,7 @@ class HousingOffers:
     def __str__(self):
         return "{meters} {price}".format(**self.__dict__)
 
+
 def fix(offer):
     replacements = {
         "m²": "",
@@ -31,15 +32,19 @@ def fix(offer):
     offer.meters = offer.meters.strip()
     offer.price = offer.price.strip()
 
+
 def extract(text):
     offers = []
     soup = BeautifulSoup(text, 'lxml')
     for offer in soup.find_all(class_='offer-item-details'):
         meters = offer.find(class_='hidden-xs offer-item-area').text
         price = offer.find(class_='offer-item-price').text.strip()
-        offers.append(HousingOffers(meters=meters,
-                                    price=price))
-    print(offers[0])
+        offer = HousingOffers(meters=meters,
+                              price=price)
+    fix(offer)
+    offers.append(offer)
+    print(offers[0].meters)
+
     # with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
     #     csvwriter = csv.DickWriter(csvfile, fieldnames=["meters", "price"])
     #     csvwriter.writerow(offers)
