@@ -5,9 +5,8 @@ import json
 import uuid
 import requests
 
-
-URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_" \
-      "id%5D=3&search%5Bsubregion_id%5D=396&search%5Bcity_id%5D=190"
+URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_id%5D=3&search%5Bsubregion" \
+      "_id%5D=396&search%5Bcity_id%5D=190"
 
 
 class HousingOffers:
@@ -41,24 +40,29 @@ def extract_next_url(text):
     soup = BeautifulSoup(text, 'lxml')
     tag = soup.find(attrs={"data-dir": "next"})
     next_url = tag.attrs["href"] if tag else None
+    print("NEXT URL", next_url)
     return next_url
 
 
 def extract_offers(text):
     offers = []
+
+
     soup = BeautifulSoup(text, 'lxml')
-    articles = soup.find_all(class_="offer_item")
+    articles = soup.find_all(class_="offer-item")
     for offer in articles:
-        id = offer.attrs['data-item-id'].text.strip()
+        id = offer.attrs["data-item-id"].strip()
+
         details = offer.find(class_='offer-item-details')
         meters = details.find(class_='hidden-xs offer-item-area').text
-        price = details.find(class_='offer-item-price').strip()
+        price = details.find(class_='offer-item-price').text.strip()
 
         offer = HousingOffers(id=id,
                               meters=meters,
                               price=price)
         fix(offer)
         offers.append(offer)
+
     return offers
 
 
@@ -71,6 +75,7 @@ def main():
     )
 
     next_url = URL
+
     dir_id = str(uuid.uuid4())
     output_dir = os.path.join("data", dir_id)
     os.makedirs(output_dir, exist_ok=True)
@@ -89,39 +94,36 @@ def main():
 
             output_filename = os.path.join(output_dir,
                                            "plik-%d.json" % page_id)
-
-            with open(output_filename, 'w', encoding='utf-8') as json_file:
+            with open(output_filename, 'w+', encoding='utf-8') as json_file:
                 json.dump([o.__dict__ for o in offers], json_file)
                 print("WROTE:", output_filename)
-
         else:
             print("ERROR")
+            next_url = None
 
-        #next_url = extract_next_url(source)
         print(next_url)
 
     create_result_file(output_dir)
 
 
 def create_result_file(directory):
-    merge_dict = {}
+    merged_dict = {}
     for entry in os.listdir(directory):
         if entry.endswith(".json"):
             json_file = os.path.join(directory, entry)
             offers = json.load(open(json_file, "r"))
             for o in offers:
-                merge_dict[o["id"]] = o
-    print(merge_dict)
+                merged_dict[o["id"]] = o
 
+    print(merged_dict)
 
     output_filename = os.path.join(directory, "results.csv")
     with open(output_filename, 'w+', encoding='utf-8') as csvfile:
         csvwriter = csv.DictWriter(csvfile,
-                               fieldnames=["id", "meters", "price"],
-                               delimiter=',')
+                                   fieldnames=["id", "meters", "price"],
+                                   delimiter=",")
         csvwriter.writeheader()
-        csvwriter.writerows(merge_dict.values())
-
+        csvwriter.writerows(merged_dict.values())
 
 
 if __name__ == "__main__":
