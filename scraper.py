@@ -12,11 +12,12 @@ URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_" \
 
 class HousingOffers:
     def __init__(self, **kwargs):
+        self.id = kwargs.pop("id", None)
         self.meters = kwargs.pop("meters", None)
         self.price = kwargs.pop("price", None)
 
     def __str__(self):
-        return "{meters} {price}".format(**self.__dict__)
+        return "{id} {meters} {price}".format(**self.__dict__)
 
 
 def fix(offer):
@@ -39,19 +40,25 @@ def fix(offer):
 def extract_next_url(text):
     soup = BeautifulSoup(text, 'lxml')
     tag = soup.find(attrs={"data-dir": "next"})
-    return tag.attrs["href"] if tag else None
+    next_url = tag.attrs["href"] if tag else None
+    return next_url
 
 
 def extract_offers(text):
     offers = []
     soup = BeautifulSoup(text, 'lxml')
-    for offer in soup.find_all(class_='offer-item-details'):
-        meters = offer.find(class_='hidden-xs offer-item-area').text
-        price = offer.find(class_='offer-item-price').text.strip()
-        offer = HousingOffers(meters=meters,
+    articles = soup.find_all(class_="offer_item")
+    for offer in articles:
+        id = offer.attrs['data-item-id'].text.strip()
+        details = offer.find(class_='offer-item-details')
+        meters = details.find(class_='hidden-xs offer-item-area').text
+        price = details.find(class_='offer-item-price').strip()
+
+        offer = HousingOffers(id=id,
+                              meters=meters,
                               price=price)
-    fix(offer)
-    offers.append(offer)
+        fix(offer)
+        offers.append(offer)
     return offers
 
 
