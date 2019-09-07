@@ -64,6 +64,7 @@ def extract_offers(text):
 
 def main():
     session = requests.Session()
+
     session.headers["USER-AGENT"] = (
         "Mozilla/5.0 (Windows NT 6.1; WOW64;"
         "Trident/7.0; rv:11.0) like Gecko"
@@ -84,6 +85,7 @@ def main():
             print("Extract")
             source = response.text
             offers = extract_offers(source)
+            next_url = extract_next_url(source)
 
             output_filename = os.path.join(output_dir,
                                            "plik-%d.json" % page_id)
@@ -95,17 +97,32 @@ def main():
         else:
             print("ERROR")
 
-        next_url = extract_next_url(source)
+        #next_url = extract_next_url(source)
         print(next_url)
 
-    # create_result_file()
+    create_result_file(output_dir)
 
-        #
-        # csvwriter = csv.DictWriter(csvfile,
-        #                            fieldnames=["meters", "price"],
-        #                            delimiter=',')
-        # csvwriter.writeheader()
-        # csvwriter.writerows([o.__dict__ for o in offers])
+
+def create_result_file(directory):
+    merge_dict = {}
+    for entry in os.listdir(directory):
+        if entry.endswith(".json"):
+            json_file = os.path.join(directory, entry)
+            offers = json.load(open(json_file, "r"))
+            for o in offers:
+                merge_dict[o["id"]] = o
+    print(merge_dict)
+
+
+    output_filename = os.path.join(directory, "results.csv")
+    with open(output_filename, 'w+', encoding='utf-8') as csvfile:
+        csvwriter = csv.DictWriter(csvfile,
+                               fieldnames=["id", "meters", "price"],
+                               delimiter=',')
+        csvwriter.writeheader()
+        csvwriter.writerows(merge_dict.values())
+
+
 
 if __name__ == "__main__":
     main()
