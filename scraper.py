@@ -3,8 +3,8 @@ import csv
 import requests
 
 
-URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_id%5D=3&search%5Bsubregion" \
-      "_id%5D=396&search%5Bcity_id%5D=190"
+URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_" \
+      "id%5D=3&search%5Bsubregion_id%5D=396&search%5Bcity_id%5D=190"
 
 
 class HousingOffers:
@@ -15,6 +15,21 @@ class HousingOffers:
     def __str__(self):
         return "{meters} {price}".format(**self.__dict__)
 
+def fix(offer):
+    replacements = {
+        "m²": "",
+        "zł": "",
+        "pln": "",
+        " ": "",
+        ",": ".",
+    }
+
+    for k, v in replacements.items():
+        offer.meters = offer.meters.replace(k, v)
+        offer.price = offer.price.replace(k, v)
+
+    offer.meters = offer.meters.strip()
+    offer.price = offer.price.strip()
 
 def extract(text):
     offers = []
@@ -24,13 +39,13 @@ def extract(text):
         price = offer.find(class_='offer-item-price').text.strip()
         offers.append(HousingOffers(meters=meters,
                                     price=price))
-    with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        csvwriter.writerow(offers)
+    print(offers[0])
+    # with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
+    #     csvwriter = csv.DickWriter(csvfile, fieldnames=["meters", "price"])
+    #     csvwriter.writerow(offers)
 
     return offers
 
-extract(URL)
 
 def main():
     session = requests.Session()
