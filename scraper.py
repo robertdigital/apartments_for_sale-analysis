@@ -1,6 +1,7 @@
 import os
 from bs4 import BeautifulSoup
 import csv
+import uuid
 import requests
 
 
@@ -34,7 +35,7 @@ def fix(offer):
     offer.price = offer.price.strip()
 
 
-def extract(text):
+def extract_offers(text):
     offers = []
     soup = BeautifulSoup(text, 'lxml')
     for offer in soup.find_all(class_='offer-item-details'):
@@ -46,15 +47,6 @@ def extract(text):
     offers.append(offer)
     print(offers[0].meters)
 
-    os.makedirs("data", exist_ok=True)
-
-    with open('data/plik.csv', 'w', encoding='utf-8') as csvfile:
-        csvwriter = csv.DictWriter(csvfile,
-                                   fieldnames=["meters", "price"],
-                                   delimiter=',')
-        csvwriter.writeheader()
-        csvwriter.writerows([o.__dict__ for o in offers])
-
     return offers
 
 
@@ -65,14 +57,29 @@ def main():
         "Trident/7.0; rv:11.0) like Gecko"
     )
 
-    response = session.get(URL)
+    next_url = URL
+    dir_id = str(uuid.uuid4())
+    output_dir = os.path.join("data", dir_id)
+    os.makedirs(output_dir, exist_ok=True)
 
-    if response.ok:
-        print("Extract")
-        source = response.text
-        extract(source)
-    else:
-        print("ERROR")
+    while next_url:
+        page_id = 1
+        response = session.get(next_url)
+
+        if response.ok:
+            print("Extract")
+            source = response.text
+            offers = extract_offers(source)
+
+            output_filename = os.path.join(output_dir, "plik-%d.csv" % page_id)
+            with open(output_filename, 'w', encoding='utf-8') as csvfile:
+                csvwriter = csv.DictWriter(csvfile,
+                                           fieldnames=["meters", "price"],
+                                           delimiter=',')
+                csvwriter.writeheader()
+                csvwriter.writerows([o.__dict__ for o in offers])
+        else:
+            print("ERROR")
 
 
 if __name__ == "__main__":
