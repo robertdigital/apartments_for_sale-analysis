@@ -35,6 +35,12 @@ def fix(offer):
     offer.price = offer.price.strip()
 
 
+def extract_next_url(text):
+    soup = BeautifulSoup(text, 'lxml')
+    tag = soup.find(attrs={"data-dir": "next"})
+    return tag.attrs["href"] if tag else None
+
+
 def extract_offers(text):
     offers = []
     soup = BeautifulSoup(text, 'lxml')
@@ -81,6 +87,10 @@ def main():
         else:
             print("ERROR")
 
+        next_url = extract_next_url(source)
+        print(next_url)
+
+    # create_result_file()
 
 if __name__ == "__main__":
     main()
