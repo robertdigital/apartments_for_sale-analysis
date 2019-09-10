@@ -15,9 +15,10 @@ class HousingOffers:
         self.meters = kwargs.pop("meters", None)
         self.price = kwargs.pop("price", None)
         self.rooms = kwargs.pop("rooms", None)
+        self.dealer = kwargs.pop("dealer", None)
 
     def __str__(self):
-        return "{id} {meters} {price} {rooms}".format(**self.__dict__)
+        return "{id} {meters} {price} {rooms} {dealer}".format(**self.__dict__)
 
 
 def fix(offer):
@@ -29,13 +30,14 @@ def fix(offer):
         ",": ".",
         "pokój": "",
         "pokoje": "",
-        "pokoi": ""
+        "pokoi": "",
     }
 
     for k, v in replacements.items():
         offer.meters = offer.meters.replace(k, v)
         offer.price = offer.price.replace(k, v)
         offer.rooms = offer.rooms.replace(k, v)
+        offer.dealer = offer.dealer.replace(k, v)
 
     offer.meters = offer.meters.strip()
     offer.price = offer.price.strip()
@@ -59,6 +61,7 @@ def extract_offers(text):
         details = offer.find(class_='offer-item-details')
         meters = details.find(class_='hidden-xs offer-item-area').text
         price = details.find(class_='offer-item-price').text.strip()
+        dealer = offer.find(class_='offer-item-details-bottom').text.strip()
         try:
             rooms = details.find(class_='offer-item-rooms hidden-xs').text
         except:
@@ -67,7 +70,8 @@ def extract_offers(text):
         offer = HousingOffers(id=offer_id,
                               meters=meters,
                               price=price,
-                              rooms=rooms)
+                              rooms=rooms,
+                              dealer=dealer)
         fix(offer)
         offers.append(offer)
 
@@ -128,7 +132,7 @@ def create_result_file(directory):
     output_filename = os.path.join(directory, "results.csv")
     with open(output_filename, 'w+', encoding='utf-8') as csvfile:
         csv_writer = csv.DictWriter(csvfile,
-                                    fieldnames=["id", "meters", "price", "rooms"],
+                                    fieldnames=["id", "meters", "price", "rooms", "dealer"],
                                     delimiter=",")
         csv_writer.writeheader()
         csv_writer.writerows(merged_dict.values())
