@@ -14,9 +14,10 @@ class HousingOffers:
         self.id = kwargs.pop("id", None)
         self.meters = kwargs.pop("meters", None)
         self.price = kwargs.pop("price", None)
+        self.rooms = kwargs.pop("rooms", None)
 
     def __str__(self):
-        return "{id} {meters} {price}".format(**self.__dict__)
+        return "{id} {meters} {price} {rooms}".format(**self.__dict__)
 
 
 def fix(offer):
@@ -26,11 +27,15 @@ def fix(offer):
         "pln": "",
         " ": "",
         ",": ".",
+        "pokój": "",
+        "pokoje": "",
+        "pokoi": ""
     }
 
     for k, v in replacements.items():
         offer.meters = offer.meters.replace(k, v)
         offer.price = offer.price.replace(k, v)
+        offer.rooms = offer.rooms.replace(k, v)
 
     offer.meters = offer.meters.strip()
     offer.price = offer.price.strip()
@@ -47,19 +52,22 @@ def extract_next_url(text):
 def extract_offers(text):
     offers = []
 
-
     soup = BeautifulSoup(text, 'lxml')
     articles = soup.find_all(class_="offer-item")
     for offer in articles:
-        id = offer.attrs["data-item-id"].strip()
-
+        offer_id = offer.attrs["data-item-id"].strip()
         details = offer.find(class_='offer-item-details')
         meters = details.find(class_='hidden-xs offer-item-area').text
         price = details.find(class_='offer-item-price').text.strip()
+        try:
+            rooms = details.find(class_='offer-item-rooms hidden-xs').text
+        except:
+            rooms = "NONE"
 
-        offer = HousingOffers(id=id,
+        offer = HousingOffers(id=offer_id,
                               meters=meters,
-                              price=price)
+                              price=price,
+                              rooms=rooms)
         fix(offer)
         offers.append(offer)
 
@@ -119,11 +127,11 @@ def create_result_file(directory):
 
     output_filename = os.path.join(directory, "results.csv")
     with open(output_filename, 'w+', encoding='utf-8') as csvfile:
-        csvwriter = csv.DictWriter(csvfile,
-                                   fieldnames=["id", "meters", "price"],
-                                   delimiter=",")
-        csvwriter.writeheader()
-        csvwriter.writerows(merged_dict.values())
+        csv_writer = csv.DictWriter(csvfile,
+                                    fieldnames=["id", "meters", "price", "rooms"],
+                                    delimiter=",")
+        csv_writer.writeheader()
+        csv_writer.writerows(merged_dict.values())
 
 
 if __name__ == "__main__":
