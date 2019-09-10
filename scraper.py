@@ -2,8 +2,9 @@ import os
 from bs4 import BeautifulSoup
 import csv
 import json
-import uuid
+import time
 import requests
+import uuid
 
 URL = "https://www.otodom.pl/sprzedaz/mieszkanie/lublin/?search%5Bregion_id%5D=3&search%5Bsubregion" \
       "_id%5D=396&search%5Bcity_id%5D=190"
@@ -17,9 +18,16 @@ class HousingOffers:
         self.rooms = kwargs.pop("rooms", None)
         self.dealer = kwargs.pop("dealer", None)
         self.title = kwargs.pop("title", None)
+        self.location = kwargs.pop("location", None)
+        self.district = kwargs.pop("district", None)
 
     def __str__(self):
-        return "{id} {meters} {price} {rooms} {dealer} {title}".format(**self.__dict__)
+        return (
+            "{id} {meters} {price}"
+            "{rooms} {dealer} {title} {district}"
+        ).format(
+            **self.__dict__
+        )
 
 
 def fix(offer):
@@ -43,6 +51,18 @@ def fix(offer):
     offer.meters = offer.meters.strip()
     offer.price = offer.price.strip()
 
+    offer.location = (
+        offer.location.strip().split()
+        if offer.location else None
+    )
+    offer.location = list(
+        map(
+            lambda l: l.rstrip(","),
+            offer.location[-2:] if offer.location else []
+        )
+    )
+    offer.district = offer.location[-1] if offer.location else None
+
 
 def extract_next_url(text):
     soup = BeautifulSoup(text, 'lxml')
@@ -64,21 +84,29 @@ def extract_offers(text):
         price = details.find(class_='offer-item-price').text.strip()
         dealer = offer.find(class_='offer-item-details-bottom').text.strip()
         title = details.find(class_='text-nowrap').text.strip()
+
+        location = details.find("p").text.strip()
+
         try:
             rooms = details.find(class_='offer-item-rooms hidden-xs').text
+        except Exception as e:
+            #print(e)
+            rooms = "EMPTY"
         except:
-            rooms = "NONE"
+            rooms = 1
 
         offer = HousingOffers(id=offer_id,
                               meters=meters,
                               price=price,
                               rooms=rooms,
                               dealer=dealer,
-                              title=title)
+                              title=title,
+                              location=location)
         fix(offer)
         offers.append(offer)
 
     return offers
+
 
 
 def main():
@@ -135,7 +163,7 @@ def create_result_file(directory):
     output_filename = os.path.join(directory, "results.csv")
     with open(output_filename, 'w+', encoding='utf-8') as csvfile:
         csv_writer = csv.DictWriter(csvfile,
-                                    fieldnames=["id", "meters", "price", "rooms", "dealer", "title"],
+                                    fieldnames=["id", "meters", "price", "rooms", "dealer", "title", 'location', 'district'],
                                     delimiter=",")
         csv_writer.writeheader()
         csv_writer.writerows(merged_dict.values())
