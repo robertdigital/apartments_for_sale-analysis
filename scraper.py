@@ -16,9 +16,10 @@ class HousingOffers:
         self.price = kwargs.pop("price", None)
         self.rooms = kwargs.pop("rooms", None)
         self.dealer = kwargs.pop("dealer", None)
+        self.title = kwargs.pop("title", None)
 
     def __str__(self):
-        return "{id} {meters} {price} {rooms} {dealer}".format(**self.__dict__)
+        return "{id} {meters} {price} {rooms} {dealer} {title}".format(**self.__dict__)
 
 
 def fix(offer):
@@ -62,6 +63,7 @@ def extract_offers(text):
         meters = details.find(class_='hidden-xs offer-item-area').text
         price = details.find(class_='offer-item-price').text.strip()
         dealer = offer.find(class_='offer-item-details-bottom').text.strip()
+        title = details.find(class_='text-nowrap').text.strip()
         try:
             rooms = details.find(class_='offer-item-rooms hidden-xs').text
         except:
@@ -71,7 +73,8 @@ def extract_offers(text):
                               meters=meters,
                               price=price,
                               rooms=rooms,
-                              dealer=dealer)
+                              dealer=dealer,
+                              title=title)
         fix(offer)
         offers.append(offer)
 
@@ -132,7 +135,7 @@ def create_result_file(directory):
     output_filename = os.path.join(directory, "results.csv")
     with open(output_filename, 'w+', encoding='utf-8') as csvfile:
         csv_writer = csv.DictWriter(csvfile,
-                                    fieldnames=["id", "meters", "price", "rooms", "dealer"],
+                                    fieldnames=["id", "meters", "price", "rooms", "dealer", "title"],
                                     delimiter=",")
         csv_writer.writeheader()
         csv_writer.writerows(merged_dict.values())
