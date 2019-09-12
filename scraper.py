@@ -90,7 +90,6 @@ def extract_offers(text):
         try:
             rooms = details.find(class_='offer-item-rooms hidden-xs').text
         except Exception as e:
-            #print(e)
             rooms = "EMPTY"
         except:
             rooms = 1
