@@ -1,7 +1,12 @@
 # apartments_for_sale-analysis
 
 Projekt w opracowaniu.
-
+# Chcemy przewidzieć cenę za m2
+## Interesują nas mieszkania:
+### - pokoje: maksymalnie 4
+### - metraż: poniżej 80m2
+### - cena: poniżej 850 tys.
+### - lokalizacja: LSM, Czuby, Bronowice, Felin, Wrotków, Węglinek, Śródmieście, Czechów
 # Analiza
 Etap 1: pozyskanie(bs4) z serwisu otodom.pl danych dotyczących mieszkań na sprzedaż (metraż, cena).
 Etap 2: testy normalności rozkładów.
@@ -23,4 +28,6 @@ Etap 7: Przygotowanie atrybutów kategorialnych
 Etap 8: Potoki
 Etap 9: Uczenie modelu - LinearRegression
 Etap 10: Uczenie modelu - DecisionTreeRegressor
+
+
 
